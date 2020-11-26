@@ -9,9 +9,12 @@
  ******************************************************************************/
 
 #include "TetrisGame.h"
-#include "DbgCs1.h"
-#include "gpio1.h"
-#include "fsl_lpuart_hal.h"
+//#include "gpio.h"
+//#include "button.h"
+#include "termlib.h"
+#include "stdint.h"
+#include <stdio.h>
+#include <stdbool.h>
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -19,7 +22,7 @@
 //! medio inutil para nosotros porque va a imprimirse en el display de puntos y no en consola
 #define SQU 223 /* character code for a square on terminal */
 
-//! Modificar con el tamaño en puntos del display
+//! antes eran 20 y 20
 #define WIDTH  20 /* Width of play area */
 #define HEIGHT 20 /* Height of play area */
 
@@ -29,6 +32,37 @@
 
 #define GAME_OVER 0
 #define GAME_RUNNING 1
+
+//* Actions that we can do with the pieces 
+typedef enum {
+  TETRIS_Action_None,
+  TETRIS_Action_MoveLeft,
+  TETRIS_Action_MoveRight,
+  TETRIS_Action_MoveDown,
+  TETRIS_Action_Rotate,
+  TETRIS_Action_Drop,
+} TETRIS_Action;
+
+typedef struct {
+  unsigned char numOfRotates;
+  unsigned char currentRotate;
+  unsigned char pieceType;
+  unsigned char x;
+  unsigned char y;
+  char attached;
+  const unsigned char *shapes;
+} piece;
+
+typedef enum {
+  NO_TETRIS,
+  TETRIS_INIT,
+  TETRIS_WAIT_FOR_START,
+  TETRIS_START,
+  TETRIS_PLAY,
+  TETRIS_LOST,
+  TETRIS_END
+} TETRIS_State;
+
 /*******************************************************************************
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
@@ -75,35 +109,6 @@ int TETRIS_Run(void);
 /*******************************************************************************
  * PRIVATE VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
-//* Actions that we can do with the pieces 
-static typedef enum {
-  TETRIS_Action_None,
-  TETRIS_Action_MoveLeft,
-  TETRIS_Action_MoveRight,
-  TETRIS_Action_MoveDown,
-  TETRIS_Action_Rotate,
-  TETRIS_Action_Drop,
-} TETRIS_Action;
-
-typedef struct {
-  unsigned char numOfRotates;
-  unsigned char currentRotate;
-  unsigned char pieceType;
-  unsigned char x;
-  unsigned char y;
-  char attached;
-  const unsigned char *shapes;
-} piece;
-
-typedef enum {
-  NO_TETRIS,
-  TETRIS_INIT,
-  TETRIS_WAIT_FOR_START,
-  TETRIS_START,
-  TETRIS_PLAY,
-  TETRIS_LOST,
-  TETRIS_END
-} TETRIS_State;
 
 //* used as delay counter for the piece drop-down
 static int frame;     
@@ -112,16 +117,7 @@ static int piece_ptr;
 //* Board of the game
 static unsigned char framebuffer[WIDTH][HEIGHT];
 
-//*Array with the different types of pieces
-static piece pieces[7] = {
-  {2,0,0,WIDTH/2,1,false,&pieces_long[0]},
-  {4,0,1,WIDTH/2,1,false,&pieces_three[0]},
-  {1,0,2,WIDTH/2,1,false,&pieces_square[0]},
-  {2,0,3,WIDTH/2,1,false,&pieces_right[0]},
-  {2,0,4,WIDTH/2,1,false,&pieces_left[0]},
-  {4,0,5,WIDTH/2,1,false,&pieces_L1[0]},
-  {4,0,6,WIDTH/2,1,false,&pieces_L2[0]},
-};
+
 
 ///////////////////////////////////////////////////////////////////////
 //*		Pieces 
@@ -236,6 +232,17 @@ static const unsigned char pieces_L2[4*4*4] = {
   ' ',SQU,' ',' ',
   ' ',' ',' ',' ',
 };
+
+//*Array with the different types of pieces
+static piece pieces[7] = {
+  {2,0,0,WIDTH/2,1,false,&pieces_long[0]},
+  {4,0,1,WIDTH/2,1,false,&pieces_three[0]},
+  {1,0,2,WIDTH/2,1,false,&pieces_square[0]},
+  {2,0,3,WIDTH/2,1,false,&pieces_right[0]},
+  {2,0,4,WIDTH/2,1,false,&pieces_left[0]},
+  {4,0,5,WIDTH/2,1,false,&pieces_L1[0]},
+  {4,0,6,WIDTH/2,1,false,&pieces_L2[0]},
+};
 ///////////////////////////////////////////////////////////////////////
 //*		End of Pieces 
 ///////////////////////////////////////////////////////////////////////
@@ -254,44 +261,45 @@ static TETRIS_State TETRIS_state = NO_TETRIS;
 //! esta funcion se usa en otras funciones como printFrameBuffer
 //* Fuction to send the information to the screen
 static void SCI_send(const char *str) {
-  debug_printf((const char*)str);
+  printf((const char*)str);
 }
 
-//! No se bien que hace pero deberiamos modificarlo para lo que necesitamos, se llama para saber los inputs del teclado segun tengo entendido
+//! No se bien que hace pero deberiamos modificarlo para lo que necesitamos, se llama para saber los inputs del teclado segun tengo entendido y nosotros no vamos a usar inputs del teclado
 static uint8_t SCI_read_nb(void) {
-  /* nonblocking read of character */
+  /* read of character */
   uint8_t c;
-
-  LPUART_HAL_Getchar(LPUART0_BASE_PTR, &c); /* returns 0 if no character was received */
+  if(kbhit()==1)
+    c = getch();
+  else
+    c = ' ';
   return c;
 }
 
-//! Modificar segun los inputs que tengamos
-//* Reads the key entered by the user and returns it (if there was no key pressed, returns TETRIS_Action_None)
-static TETRIS_Action read_keypad(void) {
-  bool btn1, btn2;
+// //* Reads the key entered by the user and returns it (if there was no key pressed, returns TETRIS_Action_None)
+// static TETRIS_Action read_keypad(void) {
+//   bool btn1, btn2;
 
-  btn1 = !GPIO_DRV_ReadPinInput(Button1);
-  if (btn1) {
-    OSA_TimeDelay(20);
-    btn1 = !GPIO_DRV_ReadPinInput(Button1);
-  }
-  btn2 = !GPIO_DRV_ReadPinInput(Button2);
-  if (btn2) {
-    OSA_TimeDelay(20);
-    btn2 = !GPIO_DRV_ReadPinInput(Button2);
-  }
-  if (btn1 && !btn2) {
-    return TETRIS_Action_MoveLeft;
-  }
-  if (!btn1 && btn2) {
-    return TETRIS_Action_MoveRight;
-  }
-  if (btn1 && btn2) {
-    return TETRIS_Action_Rotate;
-  }
-  return TETRIS_Action_None;
-}
+//   btn1 = wasTap(PIN_SW2);
+//   if (btn1) {
+//     OSA_TimeDelay(20);
+//     btn1 = wasTap(PIN_SW2);
+//   }
+//   btn2 = wasTap(PIN_SW3);
+//   if (btn2) {
+//     OSA_TimeDelay(20);
+//     btn2 = wasTap(PIN_SW3);
+//   }
+//   if (btn1 && !btn2) {
+//     return TETRIS_Action_MoveLeft;
+//   }
+//   if (!btn1 && btn2) {
+//     return TETRIS_Action_MoveRight;
+//   }
+//   if (btn1 && btn2) {
+//     return TETRIS_Action_Rotate;
+//   }
+//   return TETRIS_Action_None;
+// }
 
 //! Creo que esta funcion no nos interesa (salvo que queramos desperdiciar un borde de ptos)
 //* This fuction prints the borders
@@ -317,7 +325,7 @@ static void initFramebuffer(void){
        framebuffer[x][y] = ' ';
     }
   }
-  paintEdges();
+  paintEdges();  //comentada porque no nos interesa printear los bordes
 }
 
 //! Deberiamos modificar esta funcion para que imprima de la manera que queramos en el screen
@@ -555,6 +563,7 @@ static void PrintWelcome(void) {
   SCI_send(" SW2:     move right\r\n");
   SCI_send(" SW2+SW3: rotate\r\n");
   SCI_send("Press any to start game. \r\n");
+  getchar();
 }
 
 //! Modificar segun los inputs que tengamos
@@ -562,16 +571,17 @@ static void PrintWelcome(void) {
 static TETRIS_Action ReadKey(void) {
   TETRIS_Action action;
 
-  action = read_keypad(); /* read push buttons from board */
-  if (action==TETRIS_Action_None) { /* read keys from terminal */
-    switch (SCI_read_nb()) { /* keyboard handling */
-      case 'w': action = TETRIS_Action_Rotate;    break;
-      case 'a': action = TETRIS_Action_MoveLeft;  break;
-      case 's': action = TETRIS_Action_Drop;      break;
-      case 'd': action = TETRIS_Action_MoveRight; break;
-      case 'x': action = TETRIS_Action_MoveDown;  break;
-    }
-  }
+  //action = read_keypad(); /* read push buttons from board */
+   //if (action==TETRIS_Action_None) { /* read keys from terminal */
+     switch (SCI_read_nb()) { /* keyboard handling */
+       case 'w': action = TETRIS_Action_Rotate;    break;
+       case 'a': action = TETRIS_Action_MoveLeft;  break;
+       case 's': action = TETRIS_Action_Drop;      break;
+       case 'd': action = TETRIS_Action_MoveRight; break;
+       case 'x': action = TETRIS_Action_MoveDown;  break;
+       case ' ': action = TETRIS_Action_None;      break;
+     }
+   //}
   return action;
 }
 
@@ -655,7 +665,10 @@ int TETRIS_Run(void) {
       TETRIS_state = TETRIS_WAIT_FOR_START;
       break;
     case TETRIS_WAIT_FOR_START:
-      if (SCI_read_nb()!='\0' || read_keypad()!=TETRIS_Action_None) {
+      // if (SCI_read_nb()!='\0' || read_keypad()!=TETRIS_Action_None) {
+      //   TETRIS_state = TETRIS_START;
+      // }
+      if (SCI_read_nb()!='\0') {
         TETRIS_state = TETRIS_START;
       }
       break;
@@ -679,7 +692,11 @@ int TETRIS_Run(void) {
       TETRIS_state = TETRIS_END;
       break;
     case TETRIS_END:
-      if (SCI_read_nb()!='\0' || read_keypad()!=TETRIS_Action_None) {
+      // if (SCI_read_nb()!='\0' || read_keypad()!=TETRIS_Action_None) {
+      //   TETRIS_state = TETRIS_START;
+      //   return GAME_OVER;/* end */
+      // }
+      if (SCI_read_nb()!='\0') {
         TETRIS_state = TETRIS_START;
         return GAME_OVER;/* end */
       }
