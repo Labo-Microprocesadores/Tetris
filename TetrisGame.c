@@ -15,7 +15,7 @@
 #include "stdint.h"
 #include <stdio.h>
 #include <stdbool.h>
-
+#include <stdlib.h>
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
@@ -271,7 +271,7 @@ static uint8_t SCI_read_nb(void) {
   if(kbhit()==1)
     c = getch();
   else
-    c = ' ';
+    return '\0';
   return c;
 }
 
@@ -333,14 +333,12 @@ static void initFramebuffer(void){
 static void printFrameBuffer(void){
   int x,y;
   unsigned char c[2];
-
   if(updateScreen==true) {
     updateScreen = false;
-    SCI_send("\033[2J\033[1;1H");
     for(y=0; y<HEIGHT; y++){
       for(x=0; x<WIDTH; x++){
         c[0] = framebuffer[x][y];
-        c[1] = '\0';
+        c[1] = '\0'; //? y esto
         SCI_send((char*)&c[0]);
       }
       SCI_send("\n\r\0");
@@ -548,7 +546,6 @@ void TETRIS_Start(void) {
 //* This function is called at the beginning of the game is like the instructions manual 
 static void PrintWelcome(void) {
   /* clear any pending events */
-  SCI_send("\033[2J\033[1;1H"); /* control codes */
   SCI_send("***********\r\n");
   SCI_send("* TETRIS  *\r\n");
   SCI_send("***********\r\n");
@@ -563,7 +560,6 @@ static void PrintWelcome(void) {
   SCI_send(" SW2:     move right\r\n");
   SCI_send(" SW2+SW3: rotate\r\n");
   SCI_send("Press any to start game. \r\n");
-  getchar();
 }
 
 //! Modificar segun los inputs que tengamos
@@ -579,7 +575,7 @@ static TETRIS_Action ReadKey(void) {
        case 's': action = TETRIS_Action_Drop;      break;
        case 'd': action = TETRIS_Action_MoveRight; break;
        case 'x': action = TETRIS_Action_MoveDown;  break;
-       case ' ': action = TETRIS_Action_None;      break;
+       default:  action = TETRIS_Action_None;      break;
      }
    //}
   return action;
@@ -647,6 +643,8 @@ static unsigned char Play(void) {
     rotatePiece(&pieces[piece_ptr]);      /* rotate */
     printPiece(&pieces[piece_ptr],SQU);   /* redraw */
     break;
+  case TETRIS_Action_None:
+    break;
   default:
     lostFlag = true;
     break;
@@ -685,7 +683,6 @@ int TETRIS_Run(void) {
       }
       break;
     case TETRIS_LOST:
-      SCI_send(" \033[2J\033[1;1H");
       printPiece(&pieces[piece_ptr],SQU);
       printFrameBuffer();
       SCI_send("You lost!\n\rPress any key...\n\0");

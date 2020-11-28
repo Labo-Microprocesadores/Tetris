@@ -1,8 +1,18 @@
 #include "TetrisGame.h"
 //#include "gpio.h"
 //#include "button.h"
+#include <time.h> 
 
-
+  
+void delay(int number_of_mseconds) 
+{ 
+    // Storing start time 
+    clock_t start_time = clock(); 
+  
+    // looping till required time is not achieved 
+    while (clock() < start_time + number_of_mseconds) 
+        ; 
+} 
 
 
 /* Función que se llama 1 vez, al comienzo del programa */
@@ -14,6 +24,7 @@ void main(void)
   TETRIS_Start();
   while(1)
   {
+    delay(100); 
     TETRIS_Run();
   }
 }
