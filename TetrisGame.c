@@ -430,7 +430,6 @@ static void movePieceLeft(piece *p){
   int x,y;
   unsigned char v;
 
-  updateScreen = true;
   p-> x = (p->x)-1;
   if(p-> x == 255){
     p-> x = 0;
@@ -476,7 +475,6 @@ static void movePieceRight(piece *p){
   int x,y;
   unsigned char v;
 
-  updateScreen = true;
   p-> x = (p->x)+1;
   for(x=0; x<4; x++){
     for(y=0; y<4; y++){
@@ -584,6 +582,7 @@ static TETRIS_Action ReadKey(void) {
 //*This function is called when it is time to play
 /* return true if game is lost (with the variable lostFlag) */
 static unsigned char Play(void) {
+  system("cls");
   unsigned char lostFlag = false;
   TETRIS_Action action;
 
@@ -620,6 +619,7 @@ static unsigned char Play(void) {
 
   //* now the program reads the key and according to the value does different things
   action = ReadKey();
+  updateScreen = true;
   switch (action)
   {
   case TETRIS_Action_MoveRight:
@@ -634,6 +634,7 @@ static unsigned char Play(void) {
     }
     break;
   case TETRIS_Action_MoveDown:
+    updateScreen = true;
     if (checkAttach(&pieces[piece_ptr])==false){
       pieces[piece_ptr].y++;
     }
@@ -644,6 +645,7 @@ static unsigned char Play(void) {
     printPiece(&pieces[piece_ptr],SQU);   /* redraw */
     break;
   case TETRIS_Action_None:
+    updateScreen = true;
     break;
   default:
     lostFlag = true;
