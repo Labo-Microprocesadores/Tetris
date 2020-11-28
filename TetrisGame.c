@@ -685,6 +685,7 @@ int TETRIS_Run(void) {
       }
       break;
     case TETRIS_LOST:
+      system("cls");
       printPiece(&pieces[piece_ptr],SQU);
       printFrameBuffer();
       SCI_send("You lost!\n\rPress any key...\n\0");
