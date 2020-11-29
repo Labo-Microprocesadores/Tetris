@@ -120,7 +120,7 @@ static int piece_ptr;
 //* Board of the game
 static unsigned char framebuffer[WIDTH][HEIGHT];
 //* Level of the game
-static TETRIS_LEVEL level = HARD;
+static TETRIS_LEVEL level = EASY;
 //* points
 static uint32_t points = 0;
 //action of the key pressed
