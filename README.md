@@ -1,14 +1,18 @@
 # Tetris
 Repository with the code of the game used on one work
 
-to compile:
+to compile write this on cmd:
 
 ```
-gcc App.c TetrisGame.c -o probando.exe
+cd the/path/of/the/files
+```
+
+```
+gcc App.c TetrisGame.c -o probando8x8.exe
 ```
 
 to run:
 
 ```
-.\probando.exe
+probando8x8.exe
 ```
