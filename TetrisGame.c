@@ -63,6 +63,8 @@ typedef enum {
   TETRIS_END
 } TETRIS_State;
 
+
+
 /*******************************************************************************
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
@@ -116,7 +118,8 @@ static int frame;
 static int piece_ptr; 
 //* Board of the game
 static unsigned char framebuffer[WIDTH][HEIGHT];
-
+//* Level of the game
+TETRIS_LEVEL level = EASY;
 
 
 ///////////////////////////////////////////////////////////////////////
@@ -253,7 +256,9 @@ static TETRIS_State TETRIS_state = NO_TETRIS;
 /*******************************************************************************
  *                        GLOBAL FUNCTION DEFINITIONS
  ******************************************************************************/
-
+TETRIS_LEVEL getLevel(void){
+  return level;
+}
 /*******************************************************************************
  *                       LOCAL FUNCTION DEFINITIONS
  ******************************************************************************/
@@ -397,6 +402,7 @@ static char checkAttach(piece *p){
     for(y=3; y>=0; y--){
       v = *(p->shapes + (y*4) + ((p->currentRotate)*4*4) + x);
       if(v==SQU){
+        //if(framebuffer[(p->x)+x][(p->y)+y+1]==SQU || (p->y)+y == 8){    //esto hay que poner para el otro caso 8x8
         if(framebuffer[(p->x)+x][(p->y)+y+1]==SQU){
           //p->y = (p->y)-1;
           p->attached = true;

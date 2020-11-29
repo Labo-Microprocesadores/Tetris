@@ -24,7 +24,7 @@ void main(void)
   TETRIS_Start();
   while(1)
   {
-    delay(100); 
+    delay((int)(100/(getLevel()+1))); 
     TETRIS_Run();
   }
 }

@@ -8,6 +8,12 @@
 #define SOURCES_TETRIS_H_
 
 
+typedef enum {
+  EASY,
+  MEDIUM,
+  HARD
+} TETRIS_LEVEL;
+
 /*
  * @brief Function that is called when you want to start the game
  */
@@ -20,5 +26,12 @@ void TETRIS_Start(void);
  */
 //*
 int TETRIS_Run(void);
+
+/*
+ * @brief getter
+ * @return return the level of the game with the enum type TETRIS_LEVEL
+ */
+//*
+TETRIS_LEVEL getLevel(void);
 
 #endif /* SOURCES_TETRIS_H_ */             
