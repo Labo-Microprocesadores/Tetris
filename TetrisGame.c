@@ -402,8 +402,8 @@ static char checkAttach(piece *p){
     for(y=3; y>=0; y--){
       v = *(p->shapes + (y*4) + ((p->currentRotate)*4*4) + x);
       if(v==SQU){
-        //if(framebuffer[(p->x)+x][(p->y)+y+1]==SQU || (p->y)+y == 8){    //esto hay que poner para el otro caso 8x8
-        if(framebuffer[(p->x)+x][(p->y)+y+1]==SQU){
+        if(framebuffer[(p->x)+x][(p->y)+y+1]==SQU || (p->y)+y == 8){    //esto hay que poner para el otro caso 8x8
+        //if(framebuffer[(p->x)+x][(p->y)+y+1]==SQU){
           //p->y = (p->y)-1;
           p->attached = true;
           eatlines();
