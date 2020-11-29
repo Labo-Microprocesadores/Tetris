@@ -1,5 +1,5 @@
 # Tetris
-Repository with the code of the game used on one work
+Repository with the code of the game used on one work.
 
 to compile write this on cmd:
 
