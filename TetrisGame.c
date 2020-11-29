@@ -22,9 +22,9 @@
 //! medio inutil para nosotros porque va a imprimirse en el display de puntos y no en consola
 #define SQU 223 /* character code for a square on terminal */
 
-//! antes eran 20 y 20
-#define WIDTH  20 /* Width of play area */
-#define HEIGHT 20 /* Height of play area */
+//! antes eran 8 y 8
+#define WIDTH  8 /* Width of play area */
+#define HEIGHT 8 /* Height of play area */
 
 //? Es necesario?
 #define true 1
