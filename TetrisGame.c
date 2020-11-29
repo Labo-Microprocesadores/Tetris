@@ -46,7 +46,7 @@ typedef enum {
 typedef struct {
   unsigned char numOfRotates;
   unsigned char currentRotate;
-  unsigned char pieceType;
+  unsigned char pieceType; 
   unsigned char x;
   unsigned char y;
   char attached;
@@ -60,7 +60,8 @@ typedef enum {
   TETRIS_START,
   TETRIS_PLAY,
   TETRIS_LOST,
-  TETRIS_END
+  TETRIS_END,
+  TETRIS_PAUSE
 } TETRIS_State;
 
 
@@ -119,8 +120,11 @@ static int piece_ptr;
 //* Board of the game
 static unsigned char framebuffer[WIDTH][HEIGHT];
 //* Level of the game
-TETRIS_LEVEL level = EASY;
-
+static TETRIS_LEVEL level = HARD;
+//* points
+static uint32_t points = 0;
+//action of the key pressed
+static TETRIS_Action action;
 
 ///////////////////////////////////////////////////////////////////////
 //*		Pieces 
@@ -259,6 +263,18 @@ static TETRIS_State TETRIS_state = NO_TETRIS;
 TETRIS_LEVEL getLevel(void){
   return level;
 }
+
+void setLevel(TETRIS_LEVEL wantedLevel){
+  level = wantedLevel;
+}
+
+TETRIS_LEVEL getPoints(void){
+  return points;
+}
+
+void setPause(void){
+  action = TETRIS_PAUSE;
+}
 /*******************************************************************************
  *                       LOCAL FUNCTION DEFINITIONS
  ******************************************************************************/
@@ -381,6 +397,7 @@ static void eatlines(void) {
       }
     }
     if(eraseline==1){
+      points += 10; //increments the points
       for(y2=y; y2>0; y2--){
         for(x=1; x<(WIDTH-1); x++){
           framebuffer[x][y2+1] = framebuffer[x][y2];
@@ -579,6 +596,7 @@ static TETRIS_Action ReadKey(void) {
        case 's': action = TETRIS_Action_Drop;      break;
        case 'd': action = TETRIS_Action_MoveRight; break;
        case 'x': action = TETRIS_Action_MoveDown;  break;
+       case 'p': action = TETRIS_PAUSE;            break;
        default:  action = TETRIS_Action_None;      break;
      }
    //}
@@ -590,7 +608,6 @@ static TETRIS_Action ReadKey(void) {
 static unsigned char Play(void) {
   system("cls");
   unsigned char lostFlag = false;
-  TETRIS_Action action;
 
   printPiece(&pieces[piece_ptr],SQU);
   printFrameBuffer();
@@ -617,7 +634,7 @@ static unsigned char Play(void) {
 
   //* if you pass through here 10 times then the piece descends
   frame++;
-  if(frame==10){
+  if(frame==level){
     pieces[piece_ptr].y++;
     updateScreen = true;
     frame = 0;
@@ -653,6 +670,11 @@ static unsigned char Play(void) {
   case TETRIS_Action_None:
     updateScreen = true;
     break;
+  case TETRIS_PAUSE:
+    while(ReadKey()!=TETRIS_PAUSE){
+
+    }
+    break;
   default:
     lostFlag = true;
     break;
@@ -667,6 +689,7 @@ int TETRIS_Run(void) {
     case NO_TETRIS:
       break;
     case TETRIS_INIT:
+      points = 0;
       PrintWelcome();
       TETRIS_state = TETRIS_WAIT_FOR_START;
       break;
