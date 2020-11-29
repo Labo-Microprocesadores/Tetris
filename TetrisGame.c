@@ -23,8 +23,8 @@
 #define SQU 223 /* character code for a square on terminal */
 
 //! antes eran 20 y 20
-#define WIDTH  20 /* Width of play area */
-#define HEIGHT 20 /* Height of play area */
+#define WIDTH  10 /* Width of play area */
+#define HEIGHT 10 /* Height of play area */
 
 //? Es necesario?
 #define true 1
