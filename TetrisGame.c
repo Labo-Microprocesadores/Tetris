@@ -22,9 +22,8 @@
 //! medio inutil para nosotros porque va a imprimirse en el display de puntos y no en consola
 #define SQU 223 /* character code for a square on terminal */
 
-//! antes eran 20 y 20
-#define WIDTH  10 /* Width of play area */
-#define HEIGHT 10 /* Height of play area */
+#define WIDTH  10 //* Width of play area and the border (10 = 8+1+1)
+#define HEIGHT 10 //* Height of play area and the border (10 = 8+1+1)
 
 //? Es necesario?
 #define true 1
@@ -356,8 +355,8 @@ static void printFrameBuffer(void){
   unsigned char c[2];
   if(updateScreen==true) {
     updateScreen = false;
-    for(y=0; y<HEIGHT; y++){
-      for(x=0; x<WIDTH; x++){
+    for(y=1; y<HEIGHT-1; y++){
+      for(x=1; x<WIDTH-1; x++){
         c[0] = framebuffer[x][y];
         c[1] = '\0'; //? y esto
         SCI_send((char*)&c[0]);
